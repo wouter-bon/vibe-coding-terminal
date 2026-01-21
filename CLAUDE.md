@@ -76,3 +76,20 @@ docker run --rm -v vibe-code-server-data:/data -v $(pwd):/backup alpine tar czf 
 - `vibe-traefik-letsencrypt`: SSL certificates
 - `vibe-code-server-data`: VS Code settings and extensions
 - `vibe-code-server-project`: Project workspace files
+
+## Development Notes
+
+**GitHub Copilot Extension**: The Dockerfile uses `EXTENSIONS_GALLERY` environment variable to configure the Microsoft VS Code marketplace instead of Open VSX, as Copilot is only available from Microsoft's marketplace.
+
+**Local Testing on Windows**: The full stack (Traefik + OAuth) requires Docker socket access which may not work on Windows workstations. For local testing, run code-server directly:
+```bash
+docker build -t code-server-local ./code-server
+docker run -d -p 8080:8080 code-server-local
+# Access at http://localhost:8080
+```
+
+**Production Deployment**: The full stack requires:
+- Linux server with Docker
+- Domain with DNS pointing to the server
+- Ports 80 and 7443 publicly accessible
+- GitHub OAuth App configured with callback URL `https://DOMAIN:7443/oauth2/callback`
