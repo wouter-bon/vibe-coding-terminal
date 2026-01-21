@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
 
 USER coder
 
+# Configure code-server to use Microsoft VS Code marketplace for Copilot extensions
+ENV EXTENSIONS_GALLERY='{"serviceUrl":"https://marketplace.visualstudio.com/_apis/public/gallery","itemUrl":"https://marketplace.visualstudio.com/items","cacheUrl":"https://vscode.blob.core.windows.net/gallery/index","controlUrl":""}'
+
 # Install GitHub Copilot extension
 RUN code-server --install-extension GitHub.copilot
 
