@@ -96,6 +96,21 @@ openssl rand -base64 32 | tr -- '+/' '-_'
 
 ### 4. Deploy
 
+**Option A: Use the deployment script (recommended)**
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+The script will:
+- Check prerequisites
+- Configure environment interactively
+- Generate cookie secret
+- Build and start all services
+
+**Option B: Manual deployment**
+
 ```bash
 # Build and start all services
 docker-compose up -d
@@ -105,6 +120,16 @@ docker-compose logs -f
 
 # Check status
 docker-compose ps
+```
+
+**Deployment script commands:**
+
+```bash
+./deploy.sh           # Full deployment
+./deploy.sh --status  # Show status
+./deploy.sh --logs    # View logs
+./deploy.sh --restart # Restart services
+./deploy.sh --stop    # Stop services
 ```
 
 ### 5. Access the Terminal
