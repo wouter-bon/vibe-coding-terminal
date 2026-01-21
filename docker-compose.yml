@@ -1,0 +1,99 @@
+# Vibe Coding Terminal - Docker Compose Configuration
+# Web-based VS Code with GitHub Copilot, secured with HTTPS and GitHub OAuth
+
+services:
+  # Traefik - Reverse Proxy with Let's Encrypt SSL
+  traefik:
+    image: traefik:v3.0
+    container_name: vibe-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"      # HTTP (for ACME challenge + redirect)
+      - "7443:7443"  # HTTPS
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - traefik-letsencrypt:/letsencrypt
+    environment:
+      - EMAIL=${EMAIL}
+    networks:
+      - vibe-coding-network
+    labels:
+      - "traefik.enable=true"
+      # Dashboard (optional - accessible at https://DOMAIN:7443/dashboard/)
+      - "traefik.http.routers.dashboard.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.middlewares=oauth-auth@docker"
+
+  # OAuth2 Proxy - GitHub Authentication
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+    container_name: vibe-oauth2-proxy
+    restart: unless-stopped
+    environment:
+      - OAUTH2_PROXY_PROVIDER=github
+      - OAUTH2_PROXY_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - OAUTH2_PROXY_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - OAUTH2_PROXY_COOKIE_SECRET=${OAUTH2_PROXY_COOKIE_SECRET}
+      - OAUTH2_PROXY_COOKIE_SECURE=true
+      - OAUTH2_PROXY_COOKIE_DOMAINS=${DOMAIN}
+      - OAUTH2_PROXY_EMAIL_DOMAINS=*
+      - OAUTH2_PROXY_UPSTREAMS=http://code-server:8080
+      - OAUTH2_PROXY_HTTP_ADDRESS=0.0.0.0:4180
+      - OAUTH2_PROXY_REDIRECT_URL=https://${DOMAIN}:7443/oauth2/callback
+      - OAUTH2_PROXY_REVERSE_PROXY=true
+      - OAUTH2_PROXY_SET_XAUTHREQUEST=true
+      - OAUTH2_PROXY_PASS_ACCESS_TOKEN=true
+      - OAUTH2_PROXY_WHITELIST_DOMAINS=${DOMAIN}:7443
+      # Optional: Restrict to specific GitHub users or organizations
+      # - OAUTH2_PROXY_GITHUB_USER=${GITHUB_ALLOWED_USERS}
+      # - OAUTH2_PROXY_GITHUB_ORG=${GITHUB_ALLOWED_ORG}
+    networks:
+      - vibe-coding-network
+    labels:
+      - "traefik.enable=true"
+      # Main application route
+      - "traefik.http.routers.oauth2-proxy.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.oauth2-proxy.entrypoints=websecure"
+      - "traefik.http.routers.oauth2-proxy.tls.certresolver=letsencrypt"
+      - "traefik.http.services.oauth2-proxy.loadbalancer.server.port=4180"
+      # Auth middleware for other services
+      - "traefik.http.middlewares.oauth-auth.forwardauth.address=http://oauth2-proxy:4180/oauth2/auth"
+      - "traefik.http.middlewares.oauth-auth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.oauth-auth.forwardauth.authResponseHeaders=X-Auth-Request-User,X-Auth-Request-Email,Authorization"
+    depends_on:
+      - code-server
+
+  # code-server - VS Code in Browser
+  code-server:
+    build:
+      context: ./code-server
+      dockerfile: Dockerfile
+    container_name: vibe-code-server
+    restart: unless-stopped
+    environment:
+      - DOCKER_USER=coder
+    volumes:
+      # Persist VS Code settings and extensions
+      - code-server-data:/home/coder/.local/share/code-server
+      # Persist project files
+      - code-server-project:/home/coder/project
+      # Optional: Mount additional directories
+      # - ./workspace:/home/coder/project
+    networks:
+      - vibe-coding-network
+    # Not exposed directly - accessed through OAuth2-proxy via Traefik
+
+networks:
+  vibe-coding-network:
+    driver: bridge
+
+volumes:
+  traefik-letsencrypt:
+    name: vibe-traefik-letsencrypt
+  code-server-data:
+    name: vibe-code-server-data
+  code-server-project:
+    name: vibe-code-server-project

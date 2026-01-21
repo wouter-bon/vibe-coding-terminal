@@ -1,0 +1,40 @@
+# Traefik Static Configuration
+# Vibe Coding Terminal - HTTPS on port 7443 with Let's Encrypt
+
+api:
+  dashboard: true
+  insecure: false
+
+entryPoints:
+  websecure:
+    address: ":7443"
+    http:
+      tls:
+        certResolver: letsencrypt
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "${EMAIL}"
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
+
+  # HTTP entrypoint for ACME challenge only
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+
+providers:
+  docker:
+    exposedByDefault: false
+    network: vibe-coding-network
+
+log:
+  level: INFO
+
+accessLog: {}
