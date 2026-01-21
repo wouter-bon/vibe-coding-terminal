@@ -25,6 +25,24 @@ Vibe Coding Terminal is a Docker-based infrastructure project that deploys a sec
 
 All services communicate on a custom bridge network (`vibe-coding-network`). Only Traefik is exposed externally.
 
+## Pre-installed Tools
+
+**Languages & Runtimes:**
+- Node.js LTS (with npm)
+- Python 3 (with pip and venv)
+- Go 1.22
+- Rust (with cargo)
+
+**CLI Tools:**
+- Docker CLI
+- kubectl
+- Terraform
+- AWS CLI v2
+
+**VS Code Extensions:**
+- GitHub Copilot
+- GitHub Copilot Chat
+
 ## Common Commands
 
 ```bash
