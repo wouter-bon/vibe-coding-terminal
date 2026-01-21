@@ -16,6 +16,26 @@ A web-based VS Code environment (code-server) with GitHub Copilot, secured with 
 └─────────────────────────────────────────────────────────┘
 ```
 
+## Pre-installed Tools
+
+The code-server container comes with a full development environment:
+
+**Languages & Runtimes:**
+- Node.js LTS (with npm)
+- Python 3 (with pip and venv)
+- Go 1.22
+- Rust (with cargo)
+
+**CLI Tools:**
+- Docker CLI
+- kubectl
+- Terraform
+- AWS CLI v2
+
+**VS Code Extensions:**
+- GitHub Copilot
+- GitHub Copilot Chat
+
 ## Prerequisites
 
 - Docker and Docker Compose installed
